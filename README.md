@@ -7,11 +7,11 @@
 *** https://www.markdownguide.org/basic-syntax/#reference-style-links
 -->
 
-#Crowd Formation
+# Crowd Formation
 
-##A crowd formation simulated in Unity3D environment in order to create a dataset for Machine Learning algorithms.
+##### A crowd formation simulated in Unity3D environment in order to create a dataset for Machine Learning algorithms.
 
-### Built With
+#### Built With
 
 * Unity3D
 
@@ -23,18 +23,19 @@ Clone the project and locate the Assets folder.
 ### Prerequisites
 
 Software requirements
-* Unity3D
+* Unity3D 2020.3.38f1
 
 ### Installation
  
 1. Open the CrowdSimulationFAIR scene.
-2. Play game.
+2. Play the game.
 
 
 <!-- USAGE EXAMPLES -->
 ## Usage
 
-For an intuitive video demonstration please use a following YouTube video: [Demonstration](https://youtu.be/aE_Rhsi9dmw)_
+For an intuitive video demonstration please use a following YouTube video: [Demonstration](https://youtu.be/aE_Rhsi9dmw) - https://youtu.be/aE_Rhsi9dmw
+
 
 
 <!-- CONTACT -->
