@@ -43,4 +43,4 @@ For an intuitive video demonstration please use a following YouTube video: [Demo
 
 Dimitris Tsiakmakis - dimatsiak@gmail.com
 
-Project Link: [https://github.com/dimtsiakm/github_repo](https://github.com/dimtsiakm/github_repo)
+Project Link: [https://github.com/dimtsiakm/CrowdSimulation](https://github.com/dimtsiakm/CrowdSimulation)
