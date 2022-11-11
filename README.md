@@ -11,7 +11,7 @@
 
 ##### A crowd formation simulated in Unity3D environment in order to create a dataset for Machine Learning algorithms.
 
-![alt text](https://github.com/dimtsiakm/CrowdSimulation/demonstration.png)
+![alt text](https://github.com/dimtsiakm/CrowdSimulation/blob/main/Assets/demonstration.png)
 
 #### Built With
 
