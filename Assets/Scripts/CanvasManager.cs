@@ -7,11 +7,15 @@ public class CanvasManager : MonoBehaviour
 {
     [SerializeField] TextMeshProUGUI timeField;
     [SerializeField] TextMeshProUGUI crowdNumberField;
-    [SerializeField] TextMeshProUGUI dataProducedField;
+    [SerializeField] TextMeshProUGUI dataRecordsField;
+
     private void Start()
     {
         CrowdManager.Instance.CrowdChanged += ChangeCrowdNumber;
         CrowdManager.Instance.TimeChanged += ChangeTime;
+        DatasetCreator.DatasetRecordsChanged += ChangeDatasetRecords;
+
+        dataRecordsField.text = "Dataset Records: NO";
     }
     void ChangeTime(int time)
     {
@@ -25,5 +29,9 @@ public class CanvasManager : MonoBehaviour
     {
         crowdNumberField.text = "People Count: " + number;
     }
-    
+    void ChangeDatasetRecords(int number)
+    {
+        dataRecordsField.text = "Dataset Records: " + number;
+    }
+
 }

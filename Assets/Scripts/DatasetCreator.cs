@@ -19,6 +19,8 @@ public class DatasetCreator : MonoBehaviour
 
     public int samplingFrequencyMinutes = 5;
     private int frequencySeconds;
+
+    public static Action<int> DatasetRecordsChanged;
     
     void Start()
     {
@@ -27,7 +29,7 @@ public class DatasetCreator : MonoBehaviour
         entrance = GameObject.FindGameObjectWithTag("entrance");
         exit = GameObject.FindGameObjectWithTag("exit");
         SetHead();
-        InvokeRepeating("GetRecord", 1f, frequencySeconds);
+        InvokeRepeating("GetRecord", 0f, frequencySeconds);
 
     }
     private void SetHead()
@@ -47,7 +49,6 @@ public class DatasetCreator : MonoBehaviour
     {
         if (!isRecording)
             return;
-        Debug.Log("GetRecord " + rows);
         crowd = FindObjectsOfType<AIControlFAIR>();
         string data = "";
 
@@ -83,7 +84,12 @@ public class DatasetCreator : MonoBehaviour
         data += DateTime.Now.ToString();
         data += "\n";
         rows++;
+        DatasetRecordsChanged?.Invoke(rows);
+        
+        // Write data to the file
         File.AppendAllText(path, data);
+
+        // Stop the application when the total number of data is recorded.
         if (rows > totalRows)
         {
             UnityEditor.EditorApplication.isPlaying = false;
