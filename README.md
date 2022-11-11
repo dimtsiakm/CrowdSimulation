@@ -11,6 +11,8 @@
 
 ##### A crowd formation simulated in Unity3D environment in order to create a dataset for Machine Learning algorithms.
 
+![alt text](https://github.com/dimtsiakm/CrowdSimulation/demonstration.png)
+
 #### Built With
 
 * Unity3D
@@ -28,7 +30,8 @@ Software requirements
 ### Installation
  
 1. Open the CrowdSimulationFAIR scene.
-2. Play the game.
+2. Find CrowdManager object and refactor CrowdManager Singleton script.
+3. Play the game.
 
 
 <!-- USAGE EXAMPLES -->
