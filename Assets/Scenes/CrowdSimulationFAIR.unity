@@ -578,7 +578,7 @@ MonoBehaviour:
   maxRemainingTimeInAttractionMinutes: 30
   minAttractivenessPerc: 5
   maxAttractivenessPerc: 25
-  timeScale: 36
+  timeScale: 8
   showLogs: 0
   hours: 0.2
 --- !u!4 &414444323 stripped
