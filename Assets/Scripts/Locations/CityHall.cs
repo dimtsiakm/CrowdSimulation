@@ -6,11 +6,23 @@ public class CityHall : Location
 {
     public override float CalculateInfluence(float time)
     {
-        float range = Mathf.Cos(Mathf.PI + 2 * Mathf.PI * 2 * time);
-        float scaling = (range + 1) / 2; // scaling from [-1, 1] to [0, 1]
-        if (time < 0.5)
-            return scaling * maxInfluence;
-        else
+        
+        if(isClosed)
+            return 0;
+
+        if (isWeekend)
+            return 0;
+
+        //06:00 to 08:00
+        if (time < (2 / DAY_HOURS))
             return 0f;
+        //08:00 to 12:00
+        else if (time >= (2 / DAY_HOURS) && time < (6 / DAY_HOURS))
+            return IncreaseCos(0, maxInfluence, (time - (2 / DAY_HOURS)) / (4 / DAY_HOURS));
+        //12:00 to 15:00
+        else if (time >= (6 / DAY_HOURS) && time < (9 / DAY_HOURS))
+            return DecreaseCos(0, maxInfluence, (time - (6 / DAY_HOURS)) / (3 / DAY_HOURS));
+        else
+            return 0;
     }
 }

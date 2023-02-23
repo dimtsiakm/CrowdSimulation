@@ -1,5 +1,9 @@
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Assertions;
+using static UnityEditor.PlayerSettings;
 
 public class CrowdManager : Singleton<CrowdManager>
 {
@@ -38,6 +42,9 @@ public class CrowdManager : Singleton<CrowdManager>
     public Action<int> CrowdChanged;
     public Action<int> TimeChanged;
 
+    [HideInInspector]
+    public bool isWeekend;
+
     /// <summary>
     /// It declares the time as a percentage of a day. E.g., in the morning is 0 and in the night is 1.
     /// </summary>
@@ -51,7 +58,7 @@ public class CrowdManager : Singleton<CrowdManager>
     private int timeOClock = -1;
     private float startTime;
     [Header("Hours per Day")]
-    public float hours = 12;
+    public float hours = 0.1f;
     private int daysCount;
     
     private void Awake()
@@ -66,43 +73,84 @@ public class CrowdManager : Singleton<CrowdManager>
         NewDay();
         InvokeRepeating("CreatePeople", 1f, periodInstantiate);
     }
+
     void NewDay()
     {
+        isWeekend = false;
         daysCount++;
         Debug.Log("New Day" + daysCount);
         startTime = Time.time;
-        foreach(var attr in attractiveLocations)
+        if(daysCount % 4 == 0)
+        {
+            isWeekend = true;
+            Debug.Log("It's a weekend!");
+        }
+        foreach (var attr in attractiveLocations)
         {
             attr.GetComponent<Location>().SetInfluence(UnityEngine.Random.Range(minAttractivenessPerc, maxAttractivenessPerc));
+            if (isWeekend)
+                attr.GetComponent<Location>().SetWeekend(true);
         }
     }
     void CreatePeople()
     {
-        float minProb = 0.05f;
-        float range = Mathf.Cos(Mathf.PI + 2 * Mathf.PI * TimeOfDay);
-        float transformed = (range + 1) / 2; // scaling from [-1, 1] to [0, 1]
-        
-        ///0.05 + normal_distribution * 0.6 => max: 0.605
-        float prob = minProb + transformed * 0.6f;
+        float maxProb = 0.7f;
+        float minProb = 0.1f;
+        float value = 0;
+        //06:00 to 11:00
+        if (TimeOfDay < 0.2f)
+            value = IncreaseCos(minProb, maxProb, TimeOfDay / 0.2f);
+        //11:00 to 16:00
+        else if (TimeOfDay >= 0.2f && TimeOfDay < 0.4f)
+            value = DecreaseCos((maxProb / 2), maxProb, (TimeOfDay - 0.2f) / 0.2f);
+        //16:00 to 18:00
+        else if (TimeOfDay >= 0.4f && TimeOfDay < 0.483f)
+            value = IncreaseCos((maxProb / 2), maxProb, (TimeOfDay - 0.4f) / 0.083f);
+        //18:00 to 06:00
+        else if (TimeOfDay >= 0.483f && TimeOfDay < 1f)
+            value = DecreaseCos(minProb, maxProb, (TimeOfDay - 0.483f) / 0.517f);
+        else
+            Debug.LogError("Something is wrong!");
+
+
+        //0.05 + normal_distribution * 0.6 => max: 0.605
         float randomNumber = UnityEngine.Random.value;
-
+        
         if(showLogs)
-            Debug.Log("Random num: " + randomNumber + ", prob of creating people: " + prob + ", time: " + (Mathf.FloorToInt(TimeOfDay*12)) + ", people count: " + crowdCount);
+            Debug.Log("Random num: " + randomNumber + ", prob of creating people: " + value + ", time: " + (Mathf.FloorToInt(TimeOfDay*12)) + ", people count: " + crowdCount);
+            
 
-        if (randomNumber < prob && crowdCount <= maxCrowdCapacity)
+        if (randomNumber < value && crowdCount <= maxCrowdCapacity)
         {
             Instantiate(humanPrefab[(int)UnityEngine.Random.Range(0f, humanPrefab.Length - 1)], entrance.transform.position, Quaternion.identity);
             IncreaseCrowdByOne();
         }
     }
 
+    float IncreaseCos(float min, float max, float normalizedTime)
+    {
+        float value = Mathf.Cos(Mathf.PI + Mathf.PI * normalizedTime);
+        
+        //scale from one range to another. 
+        float newValue = ((value + 1) * (max - min) / 2) + min;
+        return newValue;
+    }
+    float DecreaseCos(float min, float max, float normalizedTime)
+    {
+        float value = Mathf.Cos(Mathf.PI * normalizedTime);
+        //scale from one range to another. 
+        float newValue = ((value + 1) * (max - min) / 2) + min;
+        return newValue;
+    }
+
     void Update()
     {
-        int time = Mathf.FloorToInt(TimeOfDay * 12);
+        int time = Mathf.FloorToInt(TimeOfDay * 24);
         if (time != timeOClock)
         {
             timeOClock = time;
             TimeChanged?.Invoke(time);
+            CheckLocationsAreClosedRoutine();
         }
         if (TimeOfDay > 1f)
             NewDay();
@@ -148,6 +196,47 @@ public class CrowdManager : Singleton<CrowdManager>
         if (crowdCount < 0)
         {
             throw new System.ArgumentException("Parameter cannot be zero", nameof(crowdCount));
+        }
+    }
+
+    void CheckLocationsAreClosedRoutine()
+    {
+        //Debug.Log("CheckLocationsAreClosedRoutine: " + TimeOfDay);
+        foreach (var attr in attractiveLocations)
+        {
+            int isClosed = attr.GetComponent<Location>().checkLocationAvailability(0.008f, TimeOfDay);
+            if (isClosed == -1)
+            {
+                List<GameObject> locations = new List<GameObject>();
+                foreach(var go in attractiveLocations)
+                {
+                    if(attr.GetComponent<Location>().Name == go.GetComponent<Location>().Name && attr != go)
+                    {
+                        locations.Add(go);
+                    }
+                }
+                foreach (var go in locations)
+                {
+                    go.GetComponent<Location>().AddInfluence(attr.GetComponent<Location>().maxInfluence / locations.Count);
+                    Debug.Log("Location " + go.GetComponent<Location>().Name + " increased their maxInfluence.");
+                }
+            }
+            else if (isClosed == 1)
+            {
+                List<GameObject> locations = new List<GameObject>();
+                foreach (var go in attractiveLocations)
+                {
+                    if (attr.GetComponent<Location>().Name == go.GetComponent<Location>().Name && attr != go)
+                    {
+                        locations.Add(go);
+                    }
+                }
+                foreach (var go in locations)
+                {
+                    go.GetComponent<Location>().DecreaseInfluence(attr.GetComponent<Location>().maxInfluence / locations.Count);
+                    Debug.Log("Location " + go.GetComponent<Location>().Name + " decreased their maxInfluence.");
+                }
+            }
         }
     }
 }

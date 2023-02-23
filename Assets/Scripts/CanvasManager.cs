@@ -19,8 +19,11 @@ public class CanvasManager : MonoBehaviour
     }
     void ChangeTime(int time)
     {
-        time += 8;
+        time += 6;
         string timeString = time.ToString();
+
+        if (time > 24)
+            time = time - 24;
         if (time < 10)
             timeString = "0" + time;
         timeField.text = "Time: " + timeString + ":00";

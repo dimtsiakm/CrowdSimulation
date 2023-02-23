@@ -17,20 +17,24 @@ public class DatasetCreator : MonoBehaviour
     int rows = 0;
     public int totalRows;
 
-    public int samplingFrequencyMinutes = 5;
-    private int frequencySeconds;
+    public int samplingFrequencyMinutes;
+
+    private float nextActionTime = 0.0f;
+    private float period;
 
     public static Action<int> DatasetRecordsChanged;
     
     void Start()
     {
-        frequencySeconds = samplingFrequencyMinutes * 60;
+        float frequencyPerHour = 60f / samplingFrequencyMinutes; //If the sampling occurs every half hour this should be 2;
+        float totalSamplesPerDay = 24f / (1f / frequencyPerHour);
+        float simulatedDayTimeInSecs = CrowdManager.Instance.hours * 60f * 60f;
+        period = simulatedDayTimeInSecs / totalSamplesPerDay;
+
         attractions = FindObjectsOfType<Location>();
         entrance = GameObject.FindGameObjectWithTag("entrance");
         exit = GameObject.FindGameObjectWithTag("exit");
         SetHead();
-        InvokeRepeating("GetRecord", 0f, frequencySeconds);
-
     }
     private void SetHead()
     {
@@ -41,58 +45,74 @@ public class DatasetCreator : MonoBehaviour
             head += "attr" + numIncr + ",currInfl" + numIncr + ",";
             numIncr++;
         }
-        head += "timestamp";
+        //head += "timestamp";
+        head += "dayTimeNormalized,";
+        head += "weekend";
         head += "\n";
         File.AppendAllText(path, head);
     }
-    private void GetRecord()
-    {
-        if (!isRecording)
-            return;
-        crowd = FindObjectsOfType<AIControlFAIR>();
-        string data = "";
 
-        int entranceNum = 0;
-        int exitNum = 0;
-        foreach (AIControlFAIR human in crowd)
+    private void Update()
+    {
+        if (Time.time > nextActionTime)
         {
-            if (Vector3.Distance(human.transform.position, entrance.transform.position) < 10f)
-            {
-                entranceNum++;
-            }
-            if (Vector3.Distance(human.transform.position, exit.transform.position) < 10f)
-            {
-                exitNum++;
-            }
+            nextActionTime += period;
+            GetRecord();
         }
-        data += entranceNum.ToString() + "," + exitNum.ToString() + ",";
-        //for each attraction, calculate the number of people who are there and the currect influence.
-        foreach (Location attr in attractions)
+    }
+
+    void GetRecord()
+    {
+        if (isRecording)
         {
-            int crowdNumberInAttraction = 0;
-            float currInfl = 0;
+            Debug.Log("Record!");
+            crowd = FindObjectsOfType<AIControlFAIR>();
+            string data = "";
+
+            int entranceNum = 0;
+            int exitNum = 0;
             foreach (AIControlFAIR human in crowd)
             {
-                if (Vector3.Distance(human.transform.position, attr.transform.position) < 8f)
+                if (Vector3.Distance(human.transform.position, entrance.transform.position) < 4f)
                 {
-                    crowdNumberInAttraction++;
+                    entranceNum++;
+                }
+                if (Vector3.Distance(human.transform.position, exit.transform.position) < 4f)
+                {
+                    exitNum++;
                 }
             }
-            currInfl = attr.CalculateInfluence(CrowdManager.Instance.TimeOfDay);
-            data += crowdNumberInAttraction.ToString() + "," + currInfl.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture) + ",";
-        }
-        data += DateTime.Now.ToString();
-        data += "\n";
-        rows++;
-        DatasetRecordsChanged?.Invoke(rows);
-        
-        // Write data to the file
-        File.AppendAllText(path, data);
+            data += entranceNum.ToString() + "," + exitNum.ToString() + ",";
+            //for each attraction, calculate the number of people who are there and their currect influence.
+            foreach (Location attr in attractions)
+            {
+                int crowdNumberInAttraction = 0;
+                float currInfl = 0;
+                foreach (AIControlFAIR human in crowd)
+                {
+                    if (Vector3.Distance(human.transform.position, attr.transform.position) < 2.5f)
+                    {
+                        crowdNumberInAttraction++;
+                    }
+                }
+                currInfl = attr.CalculateInfluence(CrowdManager.Instance.TimeOfDay);
+                data += crowdNumberInAttraction.ToString() + "," + currInfl.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture) + ",";
+            }
+            //data += DateTime.Now.ToString();
+            float t = CrowdManager.Instance.TimeOfDay;
+            data += t.ToString("0.00000", System.Globalization.CultureInfo.InvariantCulture) + ",";
+            data += CrowdManager.Instance.isWeekend ? 1 : 0;
+            data += "\n";
+            rows++;
+            DatasetRecordsChanged?.Invoke(rows);
 
-        // Stop the application when the total number of data is recorded.
-        if (rows > totalRows)
-        {
-            UnityEditor.EditorApplication.isPlaying = false;
+            File.AppendAllText(path, data);
+
+            // Stop the application when the total number of data is recorded.
+            if (rows > totalRows)
+            {
+                UnityEditor.EditorApplication.isPlaying = false;
+            }
         }
     }
 }

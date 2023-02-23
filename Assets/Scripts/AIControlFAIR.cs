@@ -34,7 +34,7 @@ public class AIControlFAIR : MonoBehaviour {
     private void Awake()
     {
         locations = GameObject.FindGameObjectsWithTag("attraction");
-        agent = this.GetComponent<UnityEngine.AI.NavMeshAgent>();
+        agent = this.GetComponent<NavMeshAgent>();
         anim = this.GetComponent<Animator>();
         anim.SetFloat("wOffset", UnityEngine.Random.Range(0.0f, 1.0f));
 
@@ -110,8 +110,6 @@ public class AIControlFAIR : MonoBehaviour {
 
         for (int i = 0; i < locations.Length; i++)
         {
-            //Debug.Log("sks: " + crowdManager.hours);
-            //float t = crowdManager.TimeOfDay;
             float probability = locations[i].GetComponent<Location>().CalculateInfluence(CrowdManager.Instance.TimeOfDay);
             total_possibility += probability;
             list_of_probabilities.Add((i, probability));
@@ -190,7 +188,7 @@ public class AIControlFAIR : MonoBehaviour {
     {
         if (Time.time - time > timeRemainingToAttraction)
         {
-            if (UnityEngine.Random.value < 0.2f)
+            if (UnityEngine.Random.value < 0.12f)
             {
                 fsm.ChangeState(States.WalkingToExit, StateTransition.Safe);
             }
